@@ -5,6 +5,26 @@ decoy() {
     return 0
 }
 
+add_files() {
+    if [[ $# -le 0 ]]; then
+        echo "Error: No files specified."
+        return 1
+    fi
+
+    for (( i = 1; i <= $#; ++i)); do
+        filename=${!i}
+        staging=".bvcs/staging"
+        if [[ ! -f $filename ]]; then
+            echo "Error: $filename not found."
+        elif grep -Fxq $filename $staging ; then
+            echo "Already staged: $filename" 
+        else
+            echo "$filename" >> $staging
+            echo "Staged: $filename"
+        fi
+    done
+}
+
 printNotBVCS() {
     echo "ERROR: Not a BVCS repository. Run 'init' first."
     return 1
@@ -37,24 +57,18 @@ init_repo() {
     touch HEAD
 
     echo "Initialized empty BVCS repository."
-    
+
     return 0
 }
 
 main() {
-    if [[ ${1} = "bvcs" ]]; then
-        echo "ERROR: unknown command ${0}"
-        return 1
-    fi
-
-    case ${2} in
+    case ${1} in
         init)
             init_repo
             ;;
         add)
             if check_repo; then
-                #implement add
-                decoy
+                add_files "${@:2}" || return $? #All arguement starting from the second
             else
                 printNotBVCS
             fi
@@ -62,7 +76,7 @@ main() {
         status)
             if check_repo; then
                 #implement add
-                decoy
+                decoy || return $?
             else
                 printNotBVCS
             fi
@@ -70,7 +84,7 @@ main() {
         commit)
             if check_repo; then
                 #implement add
-                decoy
+                decoy || return $?
             else
                 printNotBVCS
             fi
@@ -78,7 +92,7 @@ main() {
         log)
             if check_repo; then
                 #implement add
-                decoy
+                decoy || return $?
             else
                 printNotBVCS
             fi
@@ -86,7 +100,7 @@ main() {
         diff)
             if check_repo; then
                 #implement add
-                decoy
+                decoy || return $?
             else
                 printNotBVCS
             fi
@@ -94,7 +108,7 @@ main() {
         restore)
             if check_repo; then
                 #implement add
-                decoy
+                decoy || return $?
             else
                 printNotBVCS
             fi
@@ -105,7 +119,7 @@ main() {
             ;;
         *)
             if check_repo; then
-                echo "Unknown subcommand '${2}'"
+                echo "Error: Unknown subcommand '${2}'"
             else
                 printNotBVCS
             fi
@@ -115,4 +129,4 @@ main() {
     return 0
 }
 
-main  ${0} ${1}
+main  ${@:1}
