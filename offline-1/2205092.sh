@@ -1,8 +1,35 @@
+#!/opt/homebrew/bin/bash
 #need to change the shebang path before uploading
-#!/bin/bash
+staging=".bvcs/staging"
+HEAD="./bvcs/HEAD"
 
 decoy() {
     return 0
+}
+
+show_status() {
+    declare -A status_array
+
+    while IFS= read -r file; do
+        status_array["$file"]="staged"
+    done < "$staging"
+    
+    #if the head file is non-empty
+    if [[ -s $HEAD ]]; then
+        read -r headID < $HEAD
+        snapshotPATH="./bvcs/objects/$headID/files/"
+
+        while IFS= read -r snapshotfile; do
+            realfile="${snapshotfile#"$snapshotPATH"}"
+
+            #files that are being tracked but not staged and have been modified 
+            if [[ ${status_array[$realfile]} != "staged" ]] && ! cmp -s $realfile $snapshotfile; then
+                status_array[$realfile]="modified"
+            fi
+        done < <(find $snapshotPATH -type f)
+    fi
+
+
 }
 
 add_files() {
@@ -13,7 +40,6 @@ add_files() {
 
     for (( i = 1; i <= $#; ++i)); do
         filename=${!i}
-        staging=".bvcs/staging"
         if [[ ! -f $filename ]]; then
             echo "Error: $filename not found."
         elif grep -Fxq $filename $staging ; then
@@ -76,7 +102,7 @@ main() {
         status)
             if check_repo; then
                 #implement add
-                decoy || return $?
+                show_status || return $?
             else
                 printNotBVCS
             fi
