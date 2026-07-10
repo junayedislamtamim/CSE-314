@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/bash
 #need to change the shebang path before uploading
 staging="./.bvcs/staging"
 HEAD="./.bvcs/HEAD"
@@ -279,6 +279,7 @@ printNotBVCS() {
 
 usage() {
     #function to be completed
+    echo "TwT"
     return 1
 }
 
