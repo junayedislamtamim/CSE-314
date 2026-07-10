@@ -17,23 +17,31 @@ show_diff() {
     fi
 
     read -r commitID < "$HEAD"
-    snapshotPATH=".bvcs/objects/"$HEAD"/files/"
+    snapshotPATH=".bvcs/objects/${commitID}/files/"
 
     if (( $# == 1 )); then 
         filename="${1}"
         #if the file does not exist
         if [[ ! -f "${snapshotPATH}${filename}" ]]; then
-            echo "Error: not tracked."
+            echo "Error: '${filename}' is not tracked."
             return 1
         fi
 
         if diff -q "${snapshotPATH}${filename}" "${filename}" > /dev/null; then
             echo "${filename}:  no changes."
         else
-            diff -u --label "{$snapshotPATH}${filename}" --label "$filename"
+            diff -u --label "${snapshotPATH}${filename}" --label "${filename}" "${snapshotPATH}${filename}" "${filename}"
         fi
     elif (( $# == 0 )); then
+        while IFS= read -r -d '' filepath; do
+            filename="${filepath#${snapshotPATH}}"
 
+            if diff -q "${snapshotPATH}${filename}" "${filename}" > /dev/null; then
+                echo "${filename}:  no changes."
+            else
+                diff -u --label "${snapshotPATH}${filename}" --label "${filename}" "${snapshotPATH}${filename}" "${filename}"
+            fi
+        done < <(find "$snapshotPATH" -type f -print0 | sort -z)
     else
         echo "Error: invalid argument."
         return 1
@@ -128,9 +136,9 @@ show_status() {
     declare -A status_array
     declare -a staged modified untracked
     
-    while IFS= read -r file; do
+    while IFS= read -r -d '' file; do
         status_array["${file#./}"]="untracked"
-    done < <(find . -path "./.bvcs" -prune -o -type f -print)
+    done < <(find . -path "./.bvcs" -prune -o -type f -print0)
 
     while IFS= read -r file; do
         status_array["$file"]="staged"
@@ -141,8 +149,8 @@ show_status() {
         read -r headID < "$HEAD"
         snapshotPATH="./.bvcs/objects/"$headID"/files/"
 
-        while IFS= read -r snapshotfile; do
-            realfile="${snapshotfile#"$snapshotPATH"}"
+        while IFS= read -r -d '' snapshotfile; do
+            realfile="${snapshotfile#${snapshotPATH}}"
 
             #every file that is in head is tracked
             if [[ "${status_array["$realfile"]}" == "untracked" ]]; then
@@ -158,7 +166,7 @@ show_status() {
             if [[ "${status_array["$realfile"]}" != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
                 status_array["$realfile"]="modified"
             fi
-        done < <(find "$snapshotPATH" -type f)
+        done < <(find "$snapshotPATH" -type f -print0)
     fi
 
     for key in "${!status_array[@]}"; do
