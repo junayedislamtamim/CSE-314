@@ -2,9 +2,32 @@
 #need to change the shebang path before uploading
 staging="./.bvcs/staging"
 HEAD="./.bvcs/HEAD"
+log="./.bvcs/log"
+OLD_IFS="$IFS"
 
 decoy() {
     return 0
+}
+
+show_log() {
+    if [[ ! -s "$log" ]]; then
+        echo "No commits yet."
+        return 0
+    fi
+
+    mapfile -t log_lines < "$log"
+
+    for (( i = ${#log_lines[@]} - 1 ; i >= 0; --i)); do
+        line="${log_lines[$i]}"
+        
+        IFS='|' read -r commitID timestamp message <<< "$line"
+
+        printf "commit %04d\n" "$commitID"
+        echo "Date:     $timestamp"
+        echo "Message:  $message"
+        echo 
+    done 
+    
 }
 
 do_commit() {
@@ -235,7 +258,7 @@ main() {
         log)
             if check_repo; then
                 #implement add
-                decoy || return $?
+                show_log || return $?
             else
                 printNotBVCS
             fi
@@ -273,3 +296,4 @@ main() {
 }
 
 main  "${@:1}"
+IFS="$OLD_IFS"
