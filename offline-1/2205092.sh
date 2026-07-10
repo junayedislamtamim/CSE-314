@@ -7,6 +7,66 @@ decoy() {
     return 0
 }
 
+do_commit() {
+    if (( $# != 2 )) || [[ "${1}" != "-m" ]]; then
+        echo "Error: Commit message required. Use -m \"message\""
+        return 1
+    fi
+
+    if [[ ! -s "$staging" ]]; then
+        echo "Error: Nothing to commit."
+        return 1
+    fi
+
+    #Generating commitID
+    commitID=0
+
+    if [[ ! -s "$HEAD" ]]; then
+        commitID=0
+    else
+        read -r commitID < $HEAD
+    fi
+
+    ((commitID++))
+    
+    #create directory
+    destination=".bvcs/objects/"$(printf "%04d" "$commitID")""
+    (mkdir -p "${destination}")
+
+    #copying entire files/ tree
+    if [[ -s $HEAD ]]; then
+        read -r headID < $HEAD
+        src=".bvcs/objects/$headID"
+        (cp -r "${src}/files" "${destination}/files")
+    fi
+
+    #Read $staging line by line
+    count=0
+    while IFS= read -r src; do
+        dstPATH=""${destination}"/files/"${src}""
+
+        (mkdir -p "$(dirname "$dstPATH")")
+        (cp "$src" "$dstPATH")
+        ((count++))
+    done < $staging
+
+    message="${2}"
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    echo "$message" > "${destination}/message"
+    echo "$timestamp" > "${destination}/timestamp"
+
+    printf "%04d|%s|%s\n" "$commitID" "$timestamp" "$message" >> ".bvcs/log"
+
+    printf "%04d\n" "$commitID" > $HEAD
+    : > $staging # truncating the file
+
+    printf "[%04d] %s\n" "$commitID" "$message"
+    echo "$count file(s) committed."
+
+    return 0
+}
+
 show_status() {
     declare -A status_array
     declare -a staged modified untracked
@@ -128,12 +188,14 @@ init_repo() {
         return 1
     fi
 
+    (
     mkdir .bvcs
     cd .bvcs
     mkdir objects
     touch staging
     touch log
     touch HEAD
+    )
 
     echo "Initialized empty BVCS repository."
 
@@ -154,7 +216,6 @@ main() {
             ;;
         status)
             if check_repo; then
-                #implement add
                 show_status || return $?
             else
                 printNotBVCS
@@ -162,8 +223,7 @@ main() {
             ;;
         commit)
             if check_repo; then
-                #implement add
-                decoy || return $?
+                do_commit "${@:2}" || return $?
             else
                 printNotBVCS
             fi
