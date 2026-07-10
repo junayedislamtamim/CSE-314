@@ -9,6 +9,44 @@ decoy() {
     return 0
 }
 
+restore() {
+    if (( $# > 1  || $# == 0 )); then
+        echo "Error: invalid argument."
+        return 1
+    fi
+
+    #if head is empty
+    if [[ ! -s "$HEAD" ]]; then
+        echo "Error: no commits yet."
+        return 1
+    fi
+
+    read -r commitID < "$HEAD"
+    snapshotPATH=".bvcs/objects/${commitID}/files/"
+    filename="${1}"
+
+    if [[ ! -f "${snapshotPATH}${filename}" ]]; then
+        echo "Error: '${filename}' does not exist in commit ${commitID}."
+        return 1
+    fi
+
+    echo -n "Restore '${filename}' from commit ${commitID}? [y/N]: "
+    read -r prompt 
+    case "$prompt" in
+        y|Y) 
+            mkdir -p "$(dirname "$filename")"
+            cp "${snapshotPATH}${filename}" "${filename}"
+            echo "Restored: $filename"
+                ;;
+        n|N) 
+            echo "Aborted."
+            return 1 ;;
+        *) 
+            echo "Unknown command. Aborted."
+            return 1 ;;
+    esac 
+}
+
 show_diff() {
     #if head is empty
     if [[ ! -s "$HEAD" ]]; then
@@ -70,6 +108,7 @@ show_log() {
         echo 
     done 
 
+    return 0
 }
 
 do_commit() {
@@ -314,7 +353,7 @@ main() {
         restore)
             if check_repo; then
                 #implement add
-                decoy || return $?
+                restore "${@:2}" || return $?
             else
                 printNotBVCS
             fi
