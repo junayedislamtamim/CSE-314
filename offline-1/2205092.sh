@@ -1,7 +1,7 @@
 #!/opt/homebrew/bin/bash
 #need to change the shebang path before uploading
-staging=".bvcs/staging"
-HEAD="./bvcs/HEAD"
+staging="./.bvcs/staging"
+HEAD="./.bvcs/HEAD"
 
 decoy() {
     return 0
@@ -9,6 +9,11 @@ decoy() {
 
 show_status() {
     declare -A status_array
+    declare -a staged modified untracked
+    
+    while IFS= read -r file; do
+        status_array["${file#./}"]="untracked"
+    done < <(find . -path "./.bvcs" -prune -o -type f -print)
 
     while IFS= read -r file; do
         status_array["$file"]="staged"
@@ -17,19 +22,67 @@ show_status() {
     #if the head file is non-empty
     if [[ -s $HEAD ]]; then
         read -r headID < $HEAD
-        snapshotPATH="./bvcs/objects/$headID/files/"
+        snapshotPATH="./.bvcs/objects/$headID/files/"
 
         while IFS= read -r snapshotfile; do
             realfile="${snapshotfile#"$snapshotPATH"}"
+            
+
+            #the file has been deleted
+            if [[ ! -f "$realfile" ]]; then
+                continue
+            fi
 
             #files that are being tracked but not staged and have been modified 
-            if [[ ${status_array[$realfile]} != "staged" ]] && ! cmp -s $realfile $snapshotfile; then
+            if [[ ${status_array[$realfile]} != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
                 status_array[$realfile]="modified"
             fi
         done < <(find $snapshotPATH -type f)
     fi
 
+    if (( ${#status_array[@]} == 0 )); then
+        echo "Nothing to commit, working tree clean."
+        return 0
+    fi
 
+    for key in ${!status_array[@]}; do
+
+        case "${status_array["$key"]}" in
+            "staged")   staged+=("$key") ;;
+            "modified") modified+=("$key") ;;
+            "untracked") untracked+=("$key") ;;
+            *) ;;
+        esac
+    done
+
+    if (( ${#staged[@]} > 0 )); then
+        echo "Staged for commit: "
+        for file in "${staged[@]}"; do
+            echo "  ${file}"
+        done
+
+        echo
+    fi
+
+    if (( ${#modified[@]} > 0 )); then
+        echo "Modified (not staged): "
+        for file in "${modified[@]}"; do
+            echo "  ${file}"
+        done
+        
+        echo
+    fi
+
+    if (( ${#untracked[@]} > 0 )); then
+        echo "Untracked files: "
+        for file in "${untracked[@]}"; do
+            echo "  ${file}"
+        done
+        
+        echo
+    fi
+
+    return 0
 }
 
 add_files() {
