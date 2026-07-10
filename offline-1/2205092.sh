@@ -86,7 +86,11 @@ show_status() {
 
         while IFS= read -r snapshotfile; do
             realfile="${snapshotfile#"$snapshotPATH"}"
-            
+
+            #every file that is in head is tracked
+            if [[ ${status_array["$realfile"]} == "untracked" ]]; then
+                status_array["$realfile"]="tracked"
+            fi
 
             #the file has been deleted
             if [[ ! -f "$realfile" ]]; then
@@ -94,15 +98,10 @@ show_status() {
             fi
 
             #files that are being tracked but not staged and have been modified 
-            if [[ ${status_array[$realfile]} != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
-                status_array[$realfile]="modified"
+            if [[ ${status_array["$realfile"]} != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
+                status_array["$realfile"]="modified"
             fi
-        done < <(find $snapshotPATH -type f)
-    fi
-
-    if (( ${#status_array[@]} == 0 )); then
-        echo "Nothing to commit, working tree clean."
-        return 0
+        done < <(find "$snapshotPATH" -type f)
     fi
 
     for key in ${!status_array[@]}; do
@@ -114,6 +113,11 @@ show_status() {
             *) ;;
         esac
     done
+
+    if (( ${#staged[@]} == 0 && ${#modified[@]} == 0 && ${#untracked[@]} == 0 )); then
+        echo "Nothing to commit, working tree clean."
+        return 0
+    fi
 
     if (( ${#staged[@]} > 0 )); then
         echo "Staged for commit: "
