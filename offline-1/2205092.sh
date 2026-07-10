@@ -24,7 +24,7 @@ do_commit() {
     if [[ ! -s "$HEAD" ]]; then
         commitID=0
     else
-        read -r commitID < $HEAD
+        read -r commitID < "$HEAD"
     fi
 
     ((commitID++))
@@ -34,10 +34,10 @@ do_commit() {
     (mkdir -p "${destination}")
 
     #copying entire files/ tree
-    if [[ -s $HEAD ]]; then
-        read -r headID < $HEAD
-        src=".bvcs/objects/$headID"
-        (cp -r "${src}/files" "${destination}/files")
+    if [[ -s "$HEAD" ]]; then
+        read -r headID < "$HEAD"
+        src=".bvcs/objects/"$headID""
+        (cp -r ""${src}"/files" ""${destination}"/files")
     fi
 
     #Read $staging line by line
@@ -48,21 +48,21 @@ do_commit() {
         (mkdir -p "$(dirname "$dstPATH")")
         (cp "$src" "$dstPATH")
         ((count++))
-    done < $staging
+    done < "$staging"
 
     message="${2}"
     timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
 
-    echo "$message" > "${destination}/message"
-    echo "$timestamp" > "${destination}/timestamp"
+    echo "$message" > ""${destination}"/message"
+    echo "$timestamp" > ""${destination}"/timestamp"
 
     printf "%04d|%s|%s\n" "$commitID" "$timestamp" "$message" >> ".bvcs/log"
 
-    printf "%04d\n" "$commitID" > $HEAD
-    : > $staging # truncating the file
+    printf "%04d\n" "$commitID" > "$HEAD"
+    : > "$staging" # truncating the file
 
     printf "[%04d] %s\n" "$commitID" "$message"
-    echo "$count file(s) committed."
+    echo ""$count" file(s) committed."
 
     return 0
 }
@@ -80,15 +80,15 @@ show_status() {
     done < "$staging"
     
     #if the head file is non-empty
-    if [[ -s $HEAD ]]; then
-        read -r headID < $HEAD
-        snapshotPATH="./.bvcs/objects/$headID/files/"
+    if [[ -s "$HEAD" ]]; then
+        read -r headID < "$HEAD"
+        snapshotPATH="./.bvcs/objects/"$headID"/files/"
 
         while IFS= read -r snapshotfile; do
             realfile="${snapshotfile#"$snapshotPATH"}"
 
             #every file that is in head is tracked
-            if [[ ${status_array["$realfile"]} == "untracked" ]]; then
+            if [[ "${status_array["$realfile"]}" == "untracked" ]]; then
                 status_array["$realfile"]="tracked"
             fi
 
@@ -98,13 +98,13 @@ show_status() {
             fi
 
             #files that are being tracked but not staged and have been modified 
-            if [[ ${status_array["$realfile"]} != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
+            if [[ "${status_array["$realfile"]}" != "staged" ]] && ! cmp -s "$realfile" "$snapshotfile"; then
                 status_array["$realfile"]="modified"
             fi
         done < <(find "$snapshotPATH" -type f)
     fi
 
-    for key in ${!status_array[@]}; do
+    for key in "${!status_array[@]}"; do
 
         case "${status_array["$key"]}" in
             "staged")   staged+=("$key") ;;
@@ -131,7 +131,7 @@ show_status() {
     if (( ${#modified[@]} > 0 )); then
         echo "Modified (not staged): "
         for file in "${modified[@]}"; do
-            echo "  ${file}"
+            echo "  "${file}""
         done
         
         echo
@@ -140,7 +140,7 @@ show_status() {
     if (( ${#untracked[@]} > 0 )); then
         echo "Untracked files: "
         for file in "${untracked[@]}"; do
-            echo "  ${file}"
+            echo "  "${file}""
         done
         
         echo
@@ -150,20 +150,20 @@ show_status() {
 }
 
 add_files() {
-    if [[ $# -le 0 ]]; then
+    if (( $# <= 0 )); then
         echo "Error: No files specified."
         return 1
     fi
 
     for (( i = 1; i <= $#; ++i)); do
-        filename=${!i}
-        if [[ ! -f $filename ]]; then
-            echo "Error: $filename not found."
-        elif grep -Fxq $filename $staging ; then
-            echo "Already staged: $filename" 
+        filename="${!i}"
+        if [[ ! -f "$filename" ]]; then
+            echo "Error: "$filename" not found."
+        elif grep -Fxq "$filename" "$staging" ; then
+            echo "Already staged: "$filename"" 
         else
-            echo "$filename" >> $staging
-            echo "Staged: $filename"
+            echo "$filename" >> "$staging"
+            echo "Staged: "$filename""
         fi
     done
 }
@@ -207,7 +207,7 @@ init_repo() {
 }
 
 main() {
-    case ${1} in
+    case "${1}" in
         init)
             init_repo
             ;;
@@ -262,7 +262,7 @@ main() {
             ;;
         *)
             if check_repo; then
-                echo "Error: Unknown subcommand '${2}'"
+                echo "Error: Unknown subcommand '"${2}"'"
             else
                 printNotBVCS
             fi
@@ -272,4 +272,4 @@ main() {
     return 0
 }
 
-main  ${@:1}
+main  "${@:1}"
