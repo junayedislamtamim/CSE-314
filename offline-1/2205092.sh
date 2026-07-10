@@ -9,7 +9,41 @@ decoy() {
     return 0
 }
 
+show_diff() {
+    #if head is empty
+    if [[ ! -s "$HEAD" ]]; then
+        echo "Error: no commits yet."
+        return 1
+    fi
+
+    read -r commitID < "$HEAD"
+    snapshotPATH=".bvcs/objects/"$HEAD"/files/"
+
+    if (( $# == 1 )); then 
+        filename="${1}"
+        #if the file does not exist
+        if [[ ! -f "${snapshotPATH}${filename}" ]]; then
+            echo "Error: not tracked."
+            return 1
+        fi
+
+        if diff -q "${snapshotPATH}${filename}" "${filename}" > /dev/null; then
+            echo "${filename}:  no changes."
+        else
+            diff -u --label "{$snapshotPATH}${filename}" --label "$filename"
+        fi
+    elif (( $# == 0 )); then
+
+    else
+        echo "Error: invalid argument."
+        return 1
+    fi
+
+    return 0
+}
+
 show_log() {
+    #if log is empty
     if [[ ! -s "$log" ]]; then
         echo "No commits yet."
         return 0
@@ -27,7 +61,7 @@ show_log() {
         echo "Message:  $message"
         echo 
     done 
-    
+
 }
 
 do_commit() {
@@ -53,20 +87,20 @@ do_commit() {
     ((commitID++))
     
     #create directory
-    destination=".bvcs/objects/"$(printf "%04d" "$commitID")""
+    destination=".bvcs/objects/$(printf "%04d" "$commitID")"
     (mkdir -p "${destination}")
 
     #copying entire files/ tree
     if [[ -s "$HEAD" ]]; then
         read -r headID < "$HEAD"
-        src=".bvcs/objects/"$headID""
-        (cp -r ""${src}"/files" ""${destination}"/files")
+        src=".bvcs/objects/$headID"
+        (cp -r "${src}/files" "${destination}/files")
     fi
 
     #Read $staging line by line
     count=0
     while IFS= read -r src; do
-        dstPATH=""${destination}"/files/"${src}""
+        dstPATH="${destination}/files/${src}"
 
         (mkdir -p "$(dirname "$dstPATH")")
         (cp "$src" "$dstPATH")
@@ -76,8 +110,8 @@ do_commit() {
     message="${2}"
     timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
 
-    echo "$message" > ""${destination}"/message"
-    echo "$timestamp" > ""${destination}"/timestamp"
+    echo "$message" > "${destination}/message"
+    echo "$timestamp" > "${destination}/timestamp"
 
     printf "%04d|%s|%s\n" "$commitID" "$timestamp" "$message" >> ".bvcs/log"
 
@@ -85,7 +119,7 @@ do_commit() {
     : > "$staging" # truncating the file
 
     printf "[%04d] %s\n" "$commitID" "$message"
-    echo ""$count" file(s) committed."
+    echo "$count file(s) committed."
 
     return 0
 }
@@ -154,7 +188,7 @@ show_status() {
     if (( ${#modified[@]} > 0 )); then
         echo "Modified (not staged): "
         for file in "${modified[@]}"; do
-            echo "  "${file}""
+            echo "  ${file}"
         done
         
         echo
@@ -163,7 +197,7 @@ show_status() {
     if (( ${#untracked[@]} > 0 )); then
         echo "Untracked files: "
         for file in "${untracked[@]}"; do
-            echo "  "${file}""
+            echo "  ${file}"
         done
         
         echo
@@ -183,10 +217,10 @@ add_files() {
         if [[ ! -f "$filename" ]]; then
             echo "Error: "$filename" not found."
         elif grep -Fxq "$filename" "$staging" ; then
-            echo "Already staged: "$filename"" 
+            echo "Already staged: $filename" 
         else
             echo "$filename" >> "$staging"
-            echo "Staged: "$filename""
+            echo "Staged: $filename"
         fi
     done
 }
@@ -257,7 +291,6 @@ main() {
             ;;
         log)
             if check_repo; then
-                #implement add
                 show_log || return $?
             else
                 printNotBVCS
@@ -265,8 +298,7 @@ main() {
             ;;
         diff)
             if check_repo; then
-                #implement add
-                decoy || return $?
+                show_diff "${@:2}" || return $?
             else
                 printNotBVCS
             fi
