@@ -15,7 +15,7 @@ void* reader(void* arg)
 
     incrReader();
     int clockTime = incrclockTime();
-    std::cout << "Intelligence Staff " << ID << " began reviewing logbook at clockTime " << clockTime << ". Operations completed = " << entry << '\n';
+    std::cout << "Intelligence Staff " << ID << " began reviewing logbook at time " << clockTime << ". Operations completed = " << entry << '\n';
     decrReader();
 
     return nullptr;
