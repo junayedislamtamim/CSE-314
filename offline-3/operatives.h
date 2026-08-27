@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <queue>
 #include "locks.h"
+#include "defs.h"
 
 void recreate(int unitID)
 { 
@@ -16,8 +17,8 @@ void recreate(int unitID)
 
     if(recreate_[unitID - 1] == 0)
     {
-        int time = incrTime();
-        std::cout << "Unit " << unitID << " has completed document recreation phase at time " << time << '\n';
+        int clockTime = incrclockTime();
+        std::cout << "Unit " << unitID << " has completed document recreation phase at clockTime " << clockTime << '\n';
     }
 }
 
@@ -39,75 +40,22 @@ struct Data
     int unitID;
 };
 
-void ts1(void* arg)
+void ts(void* arg)
 {
-    int time = incrTime();
+    int clockTime = incrclockTime();
     Data* data = (Data*) arg;
     int ID = data->ID;
+    int typeStationID = ID % TYPE_STATION_COUNT;
     int unitID = data->unitID;
 
-    std::cout << "Operative " << ID << " has arrived at typewriting station at time " << time << '\n';
+    std::cout << "Operative " << ID << " has arrived at typewriting station at clockTime " << clockTime << '\n';
     
     //staion availability checking using pthread_lock
-    pthread_mutex_lock(&typeStation[0]);
+    pthread_mutex_lock(&typeStation[typeStationID]);
     recreate(unitID);
-    int time = incrTime();
-    std::cout << "Operative " << ID << " has completed document recreation at time " << time << '\n';
-    pthread_mutex_unlock(&typeStation[0]);
-
-    sendToGroupLeader(unitID);
-}
-
-void ts2(void* arg)
-{
-    int time = incrTime();
-    Data* data = (Data*) arg;
-    int ID = data->ID;
-    int unitID = data->unitID;
-    std::cout << "Operative " << (int)(intptr_t)arg << " has arrived at typewriting station at time " << time << '\n';
-    
-    //staion availability checking using pthread_lock
-    pthread_mutex_lock(&typeStation[1]);
-    recreate(unitID);
-    int time = incrTime();
-    std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
-    pthread_mutex_unlock(&typeStation[1]);
-
-    sendToGroupLeader(unitID);
-}
-
-void ts3(void* arg)
-{
-    int time = incrTime();
-    Data* data = (Data*) arg;
-    int ID = data->ID;
-    int unitID = data->unitID;
-    std::cout << "Operative " << (int)(intptr_t)arg << " has arrived at typewriting station at time " << time << '\n';
-    
-    //staion availability checking using pthread_lock
-    pthread_mutex_lock(&typeStation[2]);
-    recreate(unitID);
-    int time = incrTime();
-    std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
-    pthread_mutex_unlock(&typeStation[2]);
-
-    sendToGroupLeader(unitID);
-}
-
-void ts4(void* arg)
-{
-    int time = incrTime();
-    Data* data = (Data*) arg;
-    int ID = data->ID;
-    int unitID = data->unitID;
-    std::cout << "Operative " << (int)(intptr_t)arg << " has arrived at typewriting station at time " << time << '\n';
-    
-    //staion availability checking using pthread_lock
-    pthread_mutex_lock(&typeStation[3]);
-    recreate(unitID);
-    int time = incrTime();
-    std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
-    pthread_mutex_unlock(&typeStation[3]);
+    clockTime = incrclockTime();
+    std::cout << "Operative " << ID << " has completed document recreation at clockTime " << clockTime << '\n';
+    pthread_mutex_unlock(&typeStation[typeStationID]);
 
     sendToGroupLeader(unitID);
 }
@@ -116,8 +64,8 @@ void log(int unitID)
 {   
     pthread_mutex_lock(&logBookWrite);
     createEntry();
-    int time = incrTime();
-    std::cout << "Unit " << unitID << " has completed intelligence distribution at time " << time << '\n';
+    int clockTime = incrclockTime();
+    std::cout << "Unit " << unitID << " has completed intelligence distribution at clockTime " << clockTime << '\n';
     pthread_mutex_unlock(&logBookWrite);
 }
 
