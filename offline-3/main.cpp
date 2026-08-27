@@ -8,6 +8,4 @@ int main()
     freopen("io/log.txt", "w", stdout);
     int N, M, x, y;
     cin >> N >> M >> x >> y;
-
-
 }
