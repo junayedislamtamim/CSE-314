@@ -40,7 +40,7 @@ struct Data
     int unitID;
 };
 
-void ts(void* arg)
+void* ts(void* arg)
 {
     int clockTime = incrclockTime();
     Data* data = (Data*) arg;
@@ -58,6 +58,8 @@ void ts(void* arg)
     pthread_mutex_unlock(&typeStation[typeStationID]);
 
     sendToGroupLeader(unitID);
+
+    return nullptr;
 }
 
 void log(int unitID)

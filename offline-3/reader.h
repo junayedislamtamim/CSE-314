@@ -9,7 +9,7 @@
 #include "locks.h"
 #include "defs.h"
 
-void reader(void* arg)
+void* reader(void* arg)
 {
     int ID = (int)(intptr_t)arg;
 
@@ -17,6 +17,8 @@ void reader(void* arg)
     int clockTime = incrclockTime();
     std::cout << "Intelligence Staff " << ID << " began reviewing logbook at clockTime " << clockTime << ". Operations completed = " << entry << '\n';
     decrReader();
+
+    return nullptr;
 }
 
 #endif

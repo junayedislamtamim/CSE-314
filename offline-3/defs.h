@@ -10,11 +10,11 @@ int readerCount;
 //operatives.h
 void recreate(int unitID);
 void sendToGroupLeader(int unitID);
-void ts(void* arg);
+void* ts(void* arg);
 void log(int unitID);
 
 //reader.h
-void reader(void* arg);
+void* reader(void* arg);
 
 //locks.h
 int incrclockTime();
