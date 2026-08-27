@@ -13,9 +13,10 @@ void recreate(int unitID)
 { 
     pthread_mutex_lock(&unitLock[unitID - 1]);
     recreate_[unitID - 1]--;
+    bool flag = recreate_[unitID - 1] == 0;
     pthread_mutex_unlock(&unitLock[unitID - 1]);
 
-    if(recreate_[unitID - 1] == 0)
+    if(flag)
     {
         int clockTime = incrclockTime();
         std::cout << "Unit " << unitID << " has completed document recreation phase at time " << clockTime << '\n';
@@ -26,9 +27,10 @@ void sendToGroupLeader(int unitID)
 { 
     pthread_mutex_lock(&unitLock[unitID - 1]);
     distribute[unitID - 1]--;
+    bool flag = distribute[unitID - 1] == 0;
     pthread_mutex_unlock(&unitLock[unitID - 1]);
 
-    if(distribute[unitID - 1] == 0)
+    if(flag)
     {
         log(unitID);
     }
