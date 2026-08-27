@@ -17,10 +17,10 @@ std::vector<int> distribute;
 int incrclockTime()
 {
     pthread_mutex_lock(&clockTimeLock);
-    ++clockTime;
+    int time_ = ++clockTime;
     pthread_mutex_unlock(&clockTimeLock);
 
-    return clockTime;
+    return time_ ;
 }
 
 void incrReader()
