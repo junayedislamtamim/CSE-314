@@ -16,7 +16,7 @@ void recreate(int unitID)
 
     if(recreate_[unitID - 1] == 0)
     {
-        incrTime();
+        int time = incrTime();
         std::cout << "Unit " << unitID << " has completed document recreation phase at time " << time << '\n';
     }
 }
@@ -41,7 +41,7 @@ struct Data
 
 void ts1(void* arg)
 {
-    incrTime();
+    int time = incrTime();
     Data* data = (Data*) arg;
     int ID = data->ID;
     int unitID = data->unitID;
@@ -51,7 +51,7 @@ void ts1(void* arg)
     //staion availability checking using pthread_lock
     pthread_mutex_lock(&typeStation[0]);
     recreate(unitID);
-    incrTime();
+    int time = incrTime();
     std::cout << "Operative " << ID << " has completed document recreation at time " << time << '\n';
     pthread_mutex_unlock(&typeStation[0]);
 
@@ -60,7 +60,7 @@ void ts1(void* arg)
 
 void ts2(void* arg)
 {
-    incrTime();
+    int time = incrTime();
     Data* data = (Data*) arg;
     int ID = data->ID;
     int unitID = data->unitID;
@@ -69,7 +69,7 @@ void ts2(void* arg)
     //staion availability checking using pthread_lock
     pthread_mutex_lock(&typeStation[1]);
     recreate(unitID);
-    incrTime();
+    int time = incrTime();
     std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
     pthread_mutex_unlock(&typeStation[1]);
 
@@ -78,7 +78,7 @@ void ts2(void* arg)
 
 void ts3(void* arg)
 {
-    incrTime();
+    int time = incrTime();
     Data* data = (Data*) arg;
     int ID = data->ID;
     int unitID = data->unitID;
@@ -87,7 +87,7 @@ void ts3(void* arg)
     //staion availability checking using pthread_lock
     pthread_mutex_lock(&typeStation[2]);
     recreate(unitID);
-    incrTime();
+    int time = incrTime();
     std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
     pthread_mutex_unlock(&typeStation[2]);
 
@@ -96,7 +96,7 @@ void ts3(void* arg)
 
 void ts4(void* arg)
 {
-    incrTime();
+    int time = incrTime();
     Data* data = (Data*) arg;
     int ID = data->ID;
     int unitID = data->unitID;
@@ -105,7 +105,7 @@ void ts4(void* arg)
     //staion availability checking using pthread_lock
     pthread_mutex_lock(&typeStation[3]);
     recreate(unitID);
-    incrTime();
+    int time = incrTime();
     std::cout << "Operative " << (int)(intptr_t)arg << " has completed document recreation at time " << time << '\n';
     pthread_mutex_unlock(&typeStation[3]);
 
@@ -114,11 +114,11 @@ void ts4(void* arg)
 
 void log(int unitID)
 {   
-    pthread_mutex_lock(&logBook);
+    pthread_mutex_lock(&logBookWrite);
     createEntry();
-    incrTime();
+    int time = incrTime();
     std::cout << "Unit " << unitID << " has completed intelligence distribution at time " << time << '\n';
-    pthread_mutex_unlock(&logBook);
+    pthread_mutex_unlock(&logBookWrite);
 }
 
 #endif
