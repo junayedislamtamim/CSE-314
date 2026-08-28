@@ -10,6 +10,7 @@ pthread_mutex_t clockTimeLock;
 pthread_mutex_t typeStation[TYPE_STATION_COUNT];
 pthread_mutex_t logBookWrite;
 pthread_mutex_t reader_;
+pthread_mutex_t log_;
 std::vector<pthread_mutex_t> unitLock;
 std::vector<int> recreate_;
 std::vector<int> distribute;

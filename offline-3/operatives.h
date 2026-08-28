@@ -19,7 +19,9 @@ void recreate(int unitID)
     if(flag)
     {
         int clockTime = incrclockTime();
+        pthread_mutex_lock(&log_);
         std::cout << "Unit " << unitID << " has completed document recreation phase at time " << clockTime << '\n';
+        pthread_mutex_unlock(&log_);
     }
 }
 
@@ -50,13 +52,17 @@ void* ts(void* arg)
     int typeStationID = ID % TYPE_STATION_COUNT;
     int unitID = data->unitID;
 
+    pthread_mutex_lock(&log_);
     std::cout << "Operative " << ID << " has arrived at typewriting station at time " << clockTime << '\n';
-    
+    pthread_mutex_unlock(&log_);
+
     //staion availability checking using pthread_lock
     pthread_mutex_lock(&typeStation[typeStationID]);
     recreate(unitID);
     clockTime = incrclockTime();
+    pthread_mutex_lock(&log_);
     std::cout << "Operative " << ID << " has completed document recreation at time " << clockTime << '\n';
+    pthread_mutex_unlock(&log_);
     pthread_mutex_unlock(&typeStation[typeStationID]);
 
     sendToGroupLeader(unitID);
@@ -69,7 +75,9 @@ void log(int unitID)
     pthread_mutex_lock(&logBookWrite);
     createEntry();
     int clockTime = incrclockTime();
+    pthread_mutex_lock(&log_);
     std::cout << "Unit " << unitID << " has completed intelligence distribution at time " << clockTime << '\n';
+    pthread_mutex_unlock(&log_);
     pthread_mutex_unlock(&logBookWrite);
 }
 

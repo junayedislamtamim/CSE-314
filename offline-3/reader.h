@@ -15,7 +15,9 @@ void* reader(void* arg)
 
     incrReader();
     int clockTime = incrclockTime();
+    pthread_mutex_lock(&log_);
     std::cout << "Intelligence Staff " << ID << " began reviewing logbook at time " << clockTime << ". Operations completed = " << entry << '\n';
+    pthread_mutex_unlock(&log_);
     decrReader();
 
     return nullptr;
